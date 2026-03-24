@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batteriespeicher-Finder | enerkii</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --color-primary:        #1C754F;
+      --color-primary-mid:    #55977B;
+      --color-primary-light:  #8FBAA8;
+      --color-primary-bg:     #E6F2EC;
+      --color-white:          #FFFFFF;
+      --color-grey-light:     #FAFAFA;
+      --color-grey-border:    #E8E8E8;
+      --color-grey:           #A4A4A4;
+      --color-grey-dark:      #4E4E4E;
+      --color-black:          #222222;
+      --color-yellow:         #FEC240;
+      --color-yellow-light:   #FFE09F;
+      --font-primary:         'Inter', 'Helvetica Neue', Arial, sans-serif;
+      --font-accent:          'Permanent Marker', cursive;
+      --radius-sm:            4px;
+      --radius-md:            8px;
+      --radius-lg:            12px;
+      --radius-xl:            16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-primary);
+      background: var(--color-grey-light);
+      color: var(--color-black);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .widget {
+      width: 100%;
+      max-width: 680px;
+      background: var(--color-white);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    .widget-header {
+      background: var(--color-primary);
+      padding: 1.75rem 2rem 1.5rem;
+      color: #fff;
+    }
+    .widget-header .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.75;
+      margin-bottom: 0.4rem;
+    }
+    .widget-header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 1.25rem;
+    }
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-yellow);
+      border-radius: 99px;
+      transition: width 0.45s ease;
+    }
+    .progress-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+
+    /* ── Body ── */
+    .widget-body { padding: 2rem 2rem 1rem; }
+
+    /* ── Screen transitions ── */
+    .screen { display: none; animation: fadeSlide 0.35s ease both; }
+    .screen.active { display: block; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Question UI ── */
+    .question-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin-bottom: 0.5rem;
+    }
+    .question-text {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--color-black);
+      line-height: 1.45;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Börsenpreis badge ── */
+    .price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--color-primary-bg);
+      border: 1px solid #b5d8c8;
+      border-radius: var(--radius-md);
+      padding: 0.55rem 0.9rem;
+      font-size: 0.82rem;
+      color: var(--color-grey-dark);
+      margin-bottom: 1.25rem;
+    }
+    .price-badge .price-val {
+      font-weight: 700;
+      color: var(--color-primary);
+      font-size: 0.95rem;
+    }
+    .price-badge .price-label { color: var(--color-grey); }
+    .price-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      flex-shrink: 0;
+    }
+    .price-badge.loading { opacity: 0.6; }
+
+    /* ── Answers ── */
+    .answers { display: flex; flex-direction: column; gap: 0.75rem; }
+    .answer-btn {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--color-grey-light);
+      border: 1.5px solid var(--color-grey-border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--color-grey-dark);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.18s ease;
+      width: 100%;
+    }
+    .answer-btn:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-bg);
+      color: var(--color-primary);
+    }
+    .answer-btn:hover .answer-icon { background: var(--color-primary); color: #fff; }
+    .answer-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--color-grey-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-grey);
+      transition: all 0.18s ease;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    /* ── Intro ── */
+    .intro-lead {
+      font-size: 1rem;
+      color: var(--color-grey-dark);
+      line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+    .intro-lead strong { color: var(--color-black); }
+    .intro-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 520px) { .intro-choices { grid-template-columns: 1fr; } }
+    .intro-card {
+      display: flex; flex-direction: column; gap: 0.6rem;
+      padding: 1.25rem;
+      background: var(--color-grey-light);
+      border: 1.5px solid var(--color-grey-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      font-family: var(--font-primary);
+    }
+    .intro-card:hover { border-color: var(--color-primary); background: var(--color-primary-bg); }
+    .intro-card:hover .intro-card-icon { background: var(--color-primary); }
+    .intro-card-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--color-primary-light);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s ease;
+    }
+    .intro-card-icon svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .intro-card-title { font-size: 0.95rem; font-weight: 600; color: var(--color-black); line-height: 1.35; }
+    .intro-card-sub { font-size: 0.8rem; color: var(--color-grey); }
+
+    /* ── Result ── */
+    .result-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .result-icon svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .result-icon.positive { background: var(--color-primary); }
+    .result-icon.negative { background: var(--color-grey); }
+
+    .result-tag {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 0.25rem 0.65rem;
+      border-radius: 99px;
+      margin-bottom: 0.6rem;
+    }
+    .result-tag.positive { background: var(--color-primary-bg); color: var(--color-primary); }
+    .result-tag.negative { background: #F0F0F0; color: var(--color-grey); }
+
+    .result-headline {
+      font-size: 1.3rem; font-weight: 700;
+      color: var(--color-black);
+      margin-bottom: 0.75rem; line-height: 1.3;
+    }
+    .result-description {
+      font-size: 0.9rem; color: var(--color-grey-dark);
+      line-height: 1.65; margin-bottom: 1.5rem;
+    }
+    .result-description a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid #b5d8c8;
+    }
+    .result-description a:hover { border-color: var(--color-primary); }
+
+    .result-actions {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      align-items: center; margin-bottom: 1.25rem;
+    }
+    .result-cta {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--color-primary); color: #fff;
+      text-decoration: none; font-family: var(--font-primary);
+      font-size: 0.95rem; font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-md); border: none;
+      cursor: pointer; transition: background 0.2s ease;
+    }
+    .result-cta:hover { background: var(--color-primary-mid); }
+    .result-cta svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .result-cta-secondary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent; color: var(--color-primary);
+      text-decoration: none; font-family: var(--font-primary);
+      font-size: 0.9rem; font-weight: 600;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md); border: 1.5px solid var(--color-primary);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .result-cta-secondary:hover { background: var(--color-primary-bg); }
+
+    /* ── Info box ── */
+    .info-box {
+      background: var(--color-yellow-light);
+      border-left: 3px solid var(--color-yellow);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem; color: var(--color-grey-dark); line-height: 1.6;
+    }
+    .info-box strong { display: block; font-size: 0.8rem; font-weight: 700; color: var(--color-black); margin-bottom: 0.3rem; }
+
+    /* ── Resource strip ── */
+    .resource-strip {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--color-grey-light);
+      border: 1px solid var(--color-grey-border);
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+    .resource-strip:hover { border-color: var(--color-primary-mid); }
+    .resource-strip-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--color-primary-bg);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .resource-strip-icon svg { width: 15px; height: 15px; stroke: var(--color-primary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .resource-strip-text { flex: 1; }
+    .resource-strip-text span { display: block; font-size: 0.75rem; color: var(--color-grey); margin-bottom: 0.1rem; }
+    .resource-strip-text strong { font-size: 0.85rem; color: var(--color-black); font-weight: 600; }
+    .resource-strip-arrow { color: var(--color-grey); font-size: 1rem; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 1.25rem; }
+    .breadcrumb-item { font-size: 0.72rem; color: var(--color-grey); display: flex; align-items: center; gap: 0.3rem; }
+    .breadcrumb-item::after { content: '›'; color: var(--color-grey-border); }
+    .breadcrumb-item:last-child::after { display: none; }
+    .breadcrumb-item.active { color: var(--color-primary-mid); font-weight: 500; }
+
+    /* ── Footer ── */
+    .widget-footer {
+      padding: 0.75rem 2rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-primary); font-size: 0.85rem; font-weight: 500;
+      color: var(--color-grey); padding: 0.4rem 0; transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--color-grey-dark); }
+    .back-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .back-btn:disabled { opacity: 0; pointer-events: none; }
+    .powered { font-size: 0.72rem; color: var(--color-grey); }
+    .powered a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
+
+    /* ════════════════════════════════════════
+       CONTACT FORM MODAL
+    ════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(2px);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 1000;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1; pointer-events: all;
+    }
+    .modal {
+      background: var(--color-white);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      width: 100%; max-width: 680px;
+      max-height: 92vh;
+      overflow-y: auto;
+      transform: translateY(30px);
+      transition: transform 0.3s ease;
+      padding: 2rem 2rem 2.5rem;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--color-black); line-height: 1.3; }
+    .modal-header p { font-size: 0.85rem; color: var(--color-grey); margin-top: 0.3rem; }
+    .modal-close {
+      flex-shrink: 0;
+      background: var(--color-grey-light); border: none;
+      width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-grey-dark); font-size: 1.1rem; line-height: 1;
+      transition: background 0.15s;
+      margin-left: 1rem; margin-top: 0.1rem;
+    }
+    .modal-close:hover { background: var(--color-grey-border); }
+
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field label {
+      font-size: 0.78rem; font-weight: 600; color: var(--color-grey-dark);
+      letter-spacing: 0.02em;
+    }
+    .form-field label .req { color: var(--color-primary); }
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+      font-family: var(--font-primary);
+      font-size: 0.9rem; color: var(--color-black);
+      background: var(--color-grey-light);
+      border: 1.5px solid var(--color-grey-border);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 0.85rem;
+      transition: border-color 0.15s;
+      outline: none;
+      width: 100%;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus { border-color: var(--color-primary); background: #fff; }
+    .form-field textarea { resize: vertical; min-height: 80px; }
+    .form-field input.error,
+    .form-field textarea.error { border-color: #e53e3e; }
+
+    /* Hidden pre-fill */
+    .form-context {
+      background: var(--color-primary-bg);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.78rem; color: var(--color-primary);
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .form-context svg { width: 13px; height: 13px; stroke: var(--color-primary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    .form-submit {
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      margin-top: 1.25rem; align-items: center;
+    }
+    .form-note { font-size: 0.75rem; color: var(--color-grey); flex: 1; }
+    .btn-submit {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--color-primary); color: #fff;
+      font-family: var(--font-primary); font-size: 0.95rem; font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-md); border: none;
+      cursor: pointer; transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-submit:hover { background: var(--color-primary-mid); }
+    .btn-submit:disabled { opacity: 0.6; cursor: default; }
+    .btn-submit svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* Success state */
+    .form-success {
+      display: none; text-align: center;
+      padding: 2rem 1rem;
+    }
+    .form-success.show { display: block; }
+    .success-icon {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: var(--color-primary-bg);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.25rem;
+    }
+    .success-icon svg { width: 28px; height: 28px; stroke: var(--color-primary); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .form-success h3 { font-size: 1.2rem; font-weight: 700; color: var(--color-black); margin-bottom: 0.5rem; }
+    .form-success p { font-size: 0.9rem; color: var(--color-grey-dark); line-height: 1.6; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="widget">
+
+  <!-- ── HEADER ── -->
+  <div class="widget-header">
+    <div class="eyebrow">Batteriespeicher-Finder</div>
+    <h1 id="headerTitle">Welcher Anwendungsfall passt zu Ihnen?</h1>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <span class="progress-label" id="progressLabel">Start</span>
+    </div>
+  </div>
+
+  <!-- ── BODY ── -->
+  <div class="widget-body">
+
+    <!-- SCREEN 0: Start -->
+    <div class="screen active" id="screen-0">
+      <p class="intro-lead">
+        Batteriespeicher können <strong>Stromkosten senken</strong>, den <strong>PV-Eigenverbrauch maximieren</strong> oder beides kombinieren. Was ist Ihr primäres Ziel?
+      </p>
+      <div class="intro-choices">
+        <button class="intro-card" onclick="go('A1')">
+          <div class="intro-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span class="intro-card-title">Stromkosten allgemein reduzieren</span>
+          <span class="intro-card-sub">Netzentgelte, Tarife, Lastspitzen</span>
+        </button>
+        <button class="intro-card" onclick="go('B1')">
+          <div class="intro-card-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </div>
+          <span class="intro-card-title">Mehr PV-Strom selbst verbrauchen</span>
+          <span class="intro-card-sub">Eigenverbrauch, Solar-Optimierung</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN A1 -->
+    <div class="screen" id="screen-A1">
+      <div class="breadcrumb" id="bc-A1"></div>
+      <div class="question-label">Frage 1 von 3</div>
+      <div class="question-text">Haben Sie isolierte Lastspitzen und/oder kurze Hochlastzeitfenster?</div>
+      <div class="answers">
+        <button class="answer-btn" onclick="go('R-ATNN')">
+          <div class="answer-icon">Ja</div>
+          Ja — wir haben klar erkennbare Lastspitzen oder Hochlastzeitfenster
+        </button>
+        <button class="answer-btn" onclick="go('A2')">
+          <div class="answer-icon">Nein</div>
+          Nein — unser Lastprofil ist eher gleichmäßig
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN A2 — mit Börsenpreis-Badge -->
+    <div class="screen" id="screen-A2">
+      <div class="breadcrumb" id="bc-A2"></div>
+      <div class="question-label">Frage 2 von 3</div>
+      <div class="question-text">Liegt Ihr volumengewichteter Strompreis über dem durchschnittlichen Börsenpreis?</div>
+
+      <!-- Börsenpreis Badge — befüllt per JS -->
+      <div class="price-badge loading" id="priceBadge">
+        <div class="dot"></div>
+        <span id="priceText">Ø Börsenpreis (letzte 6 Monate) wird geladen …</span>
+      </div>
+
+      <div class="answers">
+        <button class="answer-btn" onclick="go('A3')">
+          <div class="answer-icon">Ja</div>
+          Ja — wir zahlen überwiegend fixe oder höhere Tarife
+        </button>
+        <button class="answer-btn" onclick="go('R-BESS-NO')">
+          <div class="answer-icon">Nein</div>
+          Nein — unser Preis liegt nahe am oder unter dem Börsenpreis
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN A3 -->
+    <div class="screen" id="screen-A3">
+      <div class="breadcrumb" id="bc-A3"></div>
+      <div class="question-label">Frage 3 von 3</div>
+      <div class="question-text">Sind Sie offen für eine Veränderung Ihrer Stromkaufstrategie?</div>
+      <div class="answers">
+        <button class="answer-btn" onclick="go('R-DYN')">
+          <div class="answer-icon">Ja</div>
+          Ja — wir können Einkaufsstrategie und Tarif anpassen
+        </button>
+        <button class="answer-btn" onclick="go('R-BESS-NO')">
+          <div class="answer-icon">Nein</div>
+          Nein — wir möchten unsere aktuelle Strategie beibehalten
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN B1 -->
+    <div class="screen" id="screen-B1">
+      <div class="breadcrumb" id="bc-B1"></div>
+      <div class="question-label">Frage 1 von 2</div>
+      <div class="question-text">Soll der Speicher möglichst wirtschaftlich betrieben werden?</div>
+      <div class="answers">
+        <button class="answer-btn" onclick="go('B2')">
+          <div class="answer-icon">Ja</div>
+          Ja — maximale Wirtschaftlichkeit ist uns wichtig
+        </button>
+        <button class="answer-btn" onclick="go('R-EV')">
+          <div class="answer-icon" style="font-size:0.6rem;line-height:1.2">Nicht<br>unbedingt</div>
+          Nicht unbedingt — Eigenverbrauch hat Vorrang
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN B2 -->
+    <div class="screen" id="screen-B2">
+      <div class="breadcrumb" id="bc-B2"></div>
+      <div class="question-label">Frage 2 von 2</div>
+      <div class="question-text">Liegt Ihre aktuelle Eigenverbrauchsquote zwischen 40 und 70 Prozent?</div>
+      <div class="answers">
+        <button class="answer-btn" onclick="go('R-EV')">
+          <div class="answer-icon">Ja</div>
+          Ja — wir verbrauchen 40–70 % unseres PV-Stroms selbst
+        </button>
+        <button class="answer-btn" onclick="go('R-MISPEL')">
+          <div class="answer-icon">Nein</div>
+          Nein — Quote liegt darunter oder darüber
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ RESULTS ══ -->
+
+    <!-- R: Atypische Netznutzung -->
+    <div class="screen" id="screen-R-ATNN">
+      <div class="result-icon positive">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <span class="result-tag positive">Hohes Potenzial</span>
+      <div class="result-headline">Atypische Netznutzung überprüfen</div>
+      <div class="result-description">
+        Durch gezielte Lastverschiebung in Hochlastzeitfenstern lassen sich <strong>Netzentgelte signifikant reduzieren</strong>. Ein Batteriespeicher kann hier besonders wirtschaftlich sein — die Amortisation gelingt oft schneller als erwartet.<br><br>
+        Mehr dazu: <a href="https://www.enerkii.com/blog/batteriespeicher-in-der-industrie-wofuer-lohnen-sie-sich-wirklich" target="_blank">Batteriespeicher in der Industrie — wofür lohnen sie sich wirklich?</a>
+      </div>
+      <div class="result-actions">
+        <button class="result-cta" onclick="openModal('Atypische Netznutzung')">
+          Potenzialanalyse anfragen
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="result-cta-secondary" onclick="restart()">Neu starten</button>
+      </div>
+      <a class="resource-strip" href="https://www.enerkii.com/downloads/leitfaden-batteriespeicher-im-gewerbe" target="_blank">
+        <div class="resource-strip-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg></div>
+        <div class="resource-strip-text"><span>Kostenloser Download</span><strong>Leitfaden Batteriespeicher im Gewerbe</strong></div>
+        <span class="resource-strip-arrow">→</span>
+      </a>
+      <div class="info-box">
+        <strong>Gut zu wissen</strong>
+        Dieser Entscheidungsbaum ist stark vereinfacht. Die Wirtschaftlichkeit eines BESS steigt oft erst durch die Kombination mehrerer Anwendungsfälle. Wir empfehlen immer eine Potenzialanalyse durch ein Fachunternehmen wie enerkii.
+      </div>
+    </div>
+
+    <!-- R: Dynamischer Tarif + BESS -->
+    <div class="screen" id="screen-R-DYN">
+      <div class="result-icon positive">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <span class="result-tag positive">Gutes Potenzial</span>
+      <div class="result-headline">Dynamischer Tarif + BESS überprüfen</div>
+      <div class="result-description">
+        Da Ihr Preis über dem Börsenniveau liegt und Sie flexibel bei der Einkaufsstrategie sind, lohnt sich ein <strong>dynamischer Stromtarif kombiniert mit einem Batteriespeicher</strong>. Der Speicher lädt günstig zu Niedrigpreiszeiten und entlastet in teuren Stunden.<br><br>
+        Weiterführend: <a href="https://www.enerkii.com/wissen/arbitrage" target="_blank">Arbitrage mit Batteriespeicher — so funktioniert Stromkosten-Optimierung</a>
+      </div>
+      <div class="result-actions">
+        <button class="result-cta" onclick="openModal('Dynamischer Tarif + BESS')">
+          Potenzialanalyse anfragen
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="result-cta-secondary" onclick="restart()">Neu starten</button>
+      </div>
+      <a class="resource-strip" href="https://www.enerkii.com/downloads/leitfaden-batteriespeicher-im-gewerbe" target="_blank">
+        <div class="resource-strip-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg></div>
+        <div class="resource-strip-text"><span>Kostenloser Download</span><strong>Leitfaden Batteriespeicher im Gewerbe</strong></div>
+        <span class="resource-strip-arrow">→</span>
+      </a>
+      <div class="info-box">
+        <strong>Gut zu wissen</strong>
+        Dieser Entscheidungsbaum ist stark vereinfacht. Die Wirtschaftlichkeit eines BESS steigt oft erst durch die Kombination mehrerer Anwendungsfälle. Wir empfehlen immer eine Potenzialanalyse durch ein Fachunternehmen wie enerkii.
+      </div>
+    </div>
+
+    <!-- R: BESS nicht sinnvoll -->
+    <div class="screen" id="screen-R-BESS-NO">
+      <div class="result-icon negative">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <span class="result-tag negative">Geringes Potenzial</span>
+      <div class="result-headline">BESS aktuell vermutlich nicht sinnvoll</div>
+      <div class="result-description">
+        Auf Basis Ihrer Angaben ist das wirtschaftliche Potenzial eines Batteriespeichers zur reinen Kostensenkung derzeit begrenzt. Das kann sich ändern — z.&nbsp;B. durch steigende Netzentgelte oder neue Tarifmodelle.<br><br>
+        Gerne beraten wir Sie trotzdem unverbindlich, ob andere Energielösungen für Sie passen.
+      </div>
+      <div class="result-actions">
+        <button class="result-cta" onclick="openModal('Allgemeine Beratung')">
+          Trotzdem beraten lassen
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="result-cta-secondary" onclick="restart()">Neu starten</button>
+      </div>
+      <a class="resource-strip" href="https://www.enerkii.com/downloads/leitfaden-batteriespeicher-im-gewerbe" target="_blank">
+        <div class="resource-strip-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg></div>
+        <div class="resource-strip-text"><span>Kostenloser Download</span><strong>Leitfaden Batteriespeicher im Gewerbe</strong></div>
+        <span class="resource-strip-arrow">→</span>
+      </a>
+      <div class="info-box">
+        <strong>Gut zu wissen</strong>
+        Dieser Entscheidungsbaum ist stark vereinfacht. Die Wirtschaftlichkeit eines BESS steigt oft erst durch die Kombination mehrerer Anwendungsfälle. Wir empfehlen immer eine Potenzialanalyse durch ein Fachunternehmen wie enerkii.
+      </div>
+    </div>
+
+    <!-- R: Eigenverbrauchsoptimierung -->
+    <div class="screen" id="screen-R-EV">
+      <div class="result-icon positive">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="result-tag positive">Hohes Potenzial</span>
+      <div class="result-headline">BESS zur Eigenverbrauchsoptimierung</div>
+      <div class="result-description">
+        Ein Batteriespeicher speichert Ihren PV-Überschuss und gibt ihn abends oder nachts ab — das senkt den Netzbezug spürbar. Besonders attraktiv bei Eigenverbrauchsquoten zwischen 40 und 70 %.<br><br>
+        Weiterführend: <a href="https://www.enerkii.com/wissen/eigenverbrauchsoptimierung" target="_blank">Eigenverbrauch optimieren — diese Möglichkeiten haben Sie</a>
+      </div>
+      <div class="result-actions">
+        <button class="result-cta" onclick="openModal('Eigenverbrauchsoptimierung')">
+          Potenzialanalyse anfragen
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="result-cta-secondary" onclick="restart()">Neu starten</button>
+      </div>
+      <a class="resource-strip" href="https://www.enerkii.com/downloads/leitfaden-batteriespeicher-im-gewerbe" target="_blank">
+        <div class="resource-strip-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg></div>
+        <div class="resource-strip-text"><span>Kostenloser Download</span><strong>Leitfaden Batteriespeicher im Gewerbe</strong></div>
+        <span class="resource-strip-arrow">→</span>
+      </a>
+      <div class="info-box">
+        <strong>Gut zu wissen</strong>
+        Dieser Entscheidungsbaum ist stark vereinfacht. Die Wirtschaftlichkeit eines BESS steigt oft erst durch die Kombination mehrerer Anwendungsfälle. Wir empfehlen immer eine Potenzialanalyse durch ein Fachunternehmen wie enerkii.
+      </div>
+    </div>
+
+    <!-- R: MiSpeL -->
+    <div class="screen" id="screen-R-MISPEL">
+      <div class="result-icon positive">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <span class="result-tag positive">Speziallösung prüfen</span>
+      <div class="result-headline">Speicher mit MiSpeL-Konzept prüfen</div>
+      <div class="result-description">
+        Wenn die Eigenverbrauchsquote unter 40 % oder über 70 % liegt, sind Standard-BESS-Konzepte oft suboptimal. Das <strong>MiSpeL-Konzept</strong> (Mieterstrom + Speicher + Lastmanagement) kann durch intelligente Steuerung und Mehrfachnutzung wirtschaftlichere Wege eröffnen.
+      </div>
+      <div class="result-actions">
+        <button class="result-cta" onclick="openModal('MiSpeL-Konzept')">
+          Potenzialanalyse anfragen
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="result-cta-secondary" onclick="restart()">Neu starten</button>
+      </div>
+      <a class="resource-strip" href="https://www.enerkii.com/downloads/leitfaden-batteriespeicher-im-gewerbe" target="_blank">
+        <div class="resource-strip-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg></div>
+        <div class="resource-strip-text"><span>Kostenloser Download</span><strong>Leitfaden Batteriespeicher im Gewerbe</strong></div>
+        <span class="resource-strip-arrow">→</span>
+      </a>
+      <div class="info-box">
+        <strong>Gut zu wissen</strong>
+        Dieser Entscheidungsbaum ist stark vereinfacht. Die Wirtschaftlichkeit eines BESS steigt oft erst durch die Kombination mehrerer Anwendungsfälle. Wir empfehlen immer eine Potenzialanalyse durch ein Fachunternehmen wie enerkii.
+      </div>
+    </div>
+
+  </div><!-- /widget-body -->
+
+  <!-- ── FOOTER ── -->
+  <div class="widget-footer">
+    <button class="back-btn" id="backBtn" onclick="goBack()" disabled>
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Zurück
+    </button>
+    <span class="powered">Powered by <a href="https://www.enerkii.com" target="_blank">enerkii</a></span>
+  </div>
+
+</div><!-- /widget -->
+
+
+<!-- ════════════════════════════════════════
+     CONTACT FORM MODAL
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+    <!-- Form view -->
+    <div id="formView">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalTitle">Potenzialanalyse anfragen</h2>
+          <p>Unverbindlich — unser Team meldet sich innerhalb von 24 Stunden.</p>
+        </div>
+        <button class="modal-close" onclick="closeModal()" aria-label="Schließen">✕</button>
+      </div>
+
+      <!-- Context chip — zeigt vorausgewählten Anwendungsfall -->
+      <div class="form-context" id="formContext">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="formContextText">Anwendungsfall: —</span>
+      </div>
+
+      <form id="contactForm" novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Vorname <span class="req">*</span></label>
+            <input type="text" id="f-firstname" name="firstname" placeholder="Max" required />
+          </div>
+          <div class="form-field">
+            <label>Nachname <span class="req">*</span></label>
+            <input type="text" id="f-lastname" name="lastname" placeholder="Mustermann" required />
+          </div>
+          <div class="form-field">
+            <label>Unternehmen <span class="req">*</span></label>
+            <input type="text" id="f-company" name="company" placeholder="Muster GmbH" required />
+          </div>
+          <div class="form-field">
+            <label>E-Mail-Adresse <span class="req">*</span></label>
+            <input type="email" id="f-email" name="email" placeholder="max@muster.de" required />
+          </div>
+          <div class="form-field">
+            <label>Telefonnummer</label>
+            <input type="tel" id="f-phone" name="phone" placeholder="+49 89 …" />
+          </div>
+          <div class="form-field full">
+            <label>Nachricht (optional)</label>
+            <textarea id="f-message" name="message" placeholder="Kurze Beschreibung Ihrer Anlage oder Fragen …"></textarea>
+          </div>
+        </div>
+        <!-- Hidden field for use case -->
+        <input type="hidden" id="f-usecase" name="usecase" value="" />
+
+        <div class="form-submit">
+          <span class="form-note">Mit dem Absenden stimmen Sie unserer <a href="https://www.enerkii.com/datenschutz" target="_blank" style="color:var(--color-primary)">Datenschutzerklärung</a> zu.</span>
+          <button type="submit" class="btn-submit" id="submitBtn">
+            Anfrage senden
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success view -->
+    <div class="form-success" id="successView">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3>Anfrage erhalten!</h3>
+      <p>Vielen Dank — unser Team meldet sich innerhalb von 24 Stunden bei Ihnen.<br>Wir freuen uns auf das Gespräch.</p>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+  // ════════════════════════════════
+  // CONFIG — webhook URL anpassen
+  // ════════════════════════════════
+  const FORM_WEBHOOK_URL = 'https://enerkii.app.n8n.cloud/webhook/batteriespeicher-finder-lead';
+  const PRICE_API_URL    = 'https://enerkii.app.n8n.cloud/webhook/webhook_get_price_history_day_ahead';
+
+  // ════════════════════════════════
+  // NAVIGATION STATE
+  // ════════════════════════════════
+  const history = ['0'];
+
+  const breadcrumbs = {
+    'A1':       ['Stromkosten reduzieren'],
+    'A2':       ['Stromkosten reduzieren', 'Lastspitzen: Nein'],
+    'A3':       ['Stromkosten reduzieren', 'Preis > Börse: Ja'],
+    'B1':       ['Mehr PV-Strom nutzen'],
+    'B2':       ['Mehr PV-Strom nutzen', 'Wirtschaftlichkeit wichtig'],
+    'R-ATNN':   ['Stromkosten reduzieren', 'Lastspitzen: Ja'],
+    'R-DYN':    ['Stromkosten reduzieren', 'Preis > Börse', 'Strategie flexibel'],
+    'R-BESS-NO':['Stromkosten reduzieren', '→ Geringes Potenzial'],
+    'R-EV':     ['PV-Eigenverbrauch'],
+    'R-MISPEL': ['PV-Eigenverbrauch', 'Wirtschaftlichkeit', 'Quote außerhalb 40–70%'],
+  };
+
+  const progressMap = {
+    '0':0, 'A1':25, 'A2':50, 'A3':75,
+    'B1':33, 'B2':66,
+    'R-ATNN':100, 'R-DYN':100, 'R-BESS-NO':100, 'R-EV':100, 'R-MISPEL':100,
+  };
+
+  const headerTitles = {
+    '0':       'Welcher Anwendungsfall passt zu Ihnen?',
+    'A1':      'Ihr Lastprofil',
+    'A2':      'Ihr Strompreis im Vergleich',
+    'A3':      'Ihre Einkaufsstrategie',
+    'B1':      'Wirtschaftlichkeit des Speichers',
+    'B2':      'Ihre aktuelle PV-Nutzung',
+    'R-ATNN':  'Ihre Empfehlung',
+    'R-DYN':   'Ihre Empfehlung',
+    'R-BESS-NO':'Ihre Einschätzung',
+    'R-EV':    'Ihre Empfehlung',
+    'R-MISPEL':'Ihre Empfehlung',
+  };
+
+  function go(id) {
+    const cur = history[history.length - 1];
+    hideScreen(cur);
+    history.push(id);
+    showScreen(id);
+    updateUI();
+    if (id === 'A2') loadBörsenpreis();
+  }
+
+  function goBack() {
+    if (history.length <= 1) return;
+    const cur = history.pop();
+    hideScreen(cur);
+    showScreen(history[history.length - 1]);
+    updateUI();
+  }
+
+  function restart() {
+    const cur = history[history.length - 1];
+    hideScreen(cur);
+    history.length = 0;
+    history.push('0');
+    showScreen('0');
+    updateUI();
+  }
+
+  function hideScreen(id) {
+    const el = document.getElementById('screen-' + id);
+    if (el) el.classList.remove('active');
+  }
+
+  function showScreen(id) {
+    const el = document.getElementById('screen-' + id);
+    if (!el) return;
+    el.classList.add('active');
+    const bc = breadcrumbs[id] || [];
+    const bcEl = document.getElementById('bc-' + id);
+    if (bcEl) {
+      bcEl.innerHTML = bc.map((label, i) =>
+        `<span class="breadcrumb-item${i === bc.length-1 ? ' active' : ''}">${label}</span>`
+      ).join('');
+    }
+  }
+
+  function updateUI() {
+    const cur = history[history.length - 1];
+    document.getElementById('headerTitle').textContent = headerTitles[cur] || 'Batteriespeicher-Finder';
+    const pct = progressMap[cur] || 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent =
+      pct === 100 ? 'Fertig ✓' : pct === 0 ? 'Start' : pct + ' %';
+    document.getElementById('backBtn').disabled = history.length <= 1;
+  }
+
+  // ════════════════════════════════
+  // BÖRSENPREIS API
+  // ════════════════════════════════
+  let priceLoaded = false;
+
+  async function loadBörsenpreis() {
+    if (priceLoaded) return;
+    const badge = document.getElementById('priceBadge');
+    const text  = document.getElementById('priceText');
+    try {
+      const res  = await fetch(PRICE_API_URL);
+      const data = await res.json();
+
+      // Calculate 6-month average from all returned daily avg values
+      const avgs = data
+        .map(d => parseFloat(d.avg))
+        .filter(v => !isNaN(v));
+
+      if (avgs.length === 0) throw new Error('Keine Daten');
+
+      const mean = avgs.reduce((a, b) => a + b, 0) / avgs.length;
+      const earliest = new Date(data[0].date);
+      const latest   = new Date(data[data.length - 1].date);
+      const from = earliest.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+      const to   = latest.toLocaleDateString('de-DE',   { month: 'short', year: 'numeric' });
+
+      badge.classList.remove('loading');
+      badge.innerHTML = `
+        <div class="dot"></div>
+        <span>Als Vergleich: Ø Börsenpreis (${from} – ${to}):&nbsp;<span class="price-val">${(mean / 10).toFixed(2).replace('.', ',')} ct/kWh</span></span>
+      `;
+      priceLoaded = true;
+    } catch (e) {
+      badge.classList.remove('loading');
+      text.textContent = 'Ø Börsenpreis konnte nicht geladen werden.';
+    }
+  }
+
+  // ════════════════════════════════
+  // CONTACT FORM MODAL
+  // ════════════════════════════════
+  let currentUseCase = '';
+
+  function openModal(useCase) {
+    currentUseCase = useCase || '';
+    document.getElementById('f-usecase').value = currentUseCase;
+    document.getElementById('formContextText').textContent = 'Ihr Anwendungsfall: ' + currentUseCase;
+    document.getElementById('formView').style.display = 'block';
+    document.getElementById('successView').classList.remove('show');
+    document.getElementById('contactForm').reset();
+    document.getElementById('f-usecase').value = currentUseCase;
+    // Clear any previous errors
+    document.querySelectorAll('.form-field input, .form-field textarea')
+      .forEach(el => el.classList.remove('error'));
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').innerHTML = `Anfrage senden <svg viewBox="0 0 24 24" width="16" height="16" stroke="#fff" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const firstname = document.getElementById('f-firstname');
+    const lastname  = document.getElementById('f-lastname');
+    const company   = document.getElementById('f-company');
+    const email     = document.getElementById('f-email');
+    let valid = true;
+
+    [firstname, lastname, company, email].forEach(el => {
+      el.classList.remove('error');
+      if (!el.value.trim() || (el.type === 'email' && !el.value.includes('@'))) {
+        el.classList.add('error');
+        valid = false;
+      }
+    });
+    if (!valid) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Wird gesendet …';
+
+    const payload = {
+      firstname: firstname.value.trim(),
+      lastname:  lastname.value.trim(),
+      company:   company.value.trim(),
+      email:     email.value.trim(),
+      phone:     document.getElementById('f-phone').value.trim(),
+      message:   document.getElementById('f-message').value.trim(),
+      usecase:   document.getElementById('f-usecase').value,
+      source:    'Batteriespeicher-Finder Widget',
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      await fetch(FORM_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (_) {
+      // Even if fetch fails, show success to avoid UX drop
+    }
+
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').classList.add('show');
+  });
+
+  // Init
+  updateUI();
+</script>
+
+</body>
+</html>
